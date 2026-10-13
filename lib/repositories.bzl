@@ -1,7 +1,7 @@
 "Macros for loading dependencies and registering toolchains"
 
 load("//lib:utils.bzl", http_archive = "maybe_http_archive")
-load("//lib/private:bats_toolchain.bzl", "BATS_ASSERT_VERSIONS", "BATS_CORE_TEMPLATE", "BATS_CORE_VERSIONS", "BATS_FILE_VERSIONS", "BATS_LIBRARY_TEMPLATE", "BATS_SUPPORT_VERSIONS")
+load("//lib/private:bats_toolchain.bzl", "BATS_ASSERT_VERSIONS", "BATS_CORE_TEMPLATE", "BATS_CORE_VERSIONS", "BATS_FILE_VERSIONS", "BATS_LIBRARY_TEMPLATE", "BATS_SUPPORT_VERSIONS", "bats_toolchains_repo")
 load("//lib/private:copy_directory_toolchain.bzl", "COPY_DIRECTORY_PLATFORMS", "copy_directory_platform_repo", "copy_directory_toolchains_repo")
 load("//lib/private:copy_to_directory_toolchain.bzl", "COPY_TO_DIRECTORY_PLATFORMS", "copy_to_directory_platform_repo", "copy_to_directory_toolchains_repo")
 load("//lib/private:coreutils_toolchain.bzl", "COREUTILS_PLATFORMS", "coreutils_platform_repo", "coreutils_toolchains_repo", _DEFAULT_COREUTILS_VERSION = "DEFAULT_COREUTILS_VERSION")
@@ -119,17 +119,23 @@ def register_bats_toolchains(
     )
 
     http_archive(
-        name = "%s_toolchains" % name,
+        name = "%s_core" % name,
         sha256 = BATS_CORE_VERSIONS[core_version],
         urls = [
             "https://github.com/bats-core/bats-core/archive/{}.tar.gz".format(core_version),
         ],
         strip_prefix = "bats-core-{}".format(core_version.removeprefix("v")),
-        build_file_content = BATS_CORE_TEMPLATE.format(libraries = [
+        build_file_content = BATS_CORE_TEMPLATE,
+    )
+
+    bats_toolchains_repo(
+        name = "%s_toolchains" % name,
+        core = "@%s_core//:core" % name,
+        libraries = [
             "@%s_support//:support" % name,
             "@%s_assert//:assert" % name,
             "@%s_file//:file" % name,
-        ] + libraries),
+        ] + libraries,
     )
 
     if register:
